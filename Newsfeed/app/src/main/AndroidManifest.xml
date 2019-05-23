@@ -28,7 +28,7 @@
         </activity>
 
         <activity android:name="com.hb.nf.ui.main.MainActivity" />
-        <activity android:name="com.hb.nf.ui.reputation.ReputationActivity" />
+        <activity android:name=".ui.detail.DetailActivity" />
 
     </application>
 

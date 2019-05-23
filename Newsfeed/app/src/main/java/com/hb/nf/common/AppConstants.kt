@@ -21,6 +21,8 @@ object AppConstants {
     )
 
 
+    val parseDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+
     val formatDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
 }

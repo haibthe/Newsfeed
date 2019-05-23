@@ -2,25 +2,26 @@ package com.hb.nf.ui.main
 
 import com.hb.lib.mvp.impl.lce.HBMvpLcePresenter
 import com.hb.nf.data.DataManager
+import com.hb.nf.data.entity.News
 import com.hb.nf.data.entity.dw.DataWrapper
-import com.hb.nf.data.entity.User
 import com.hb.nf.data.repository.SystemRepository
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import java.util.*
 import javax.inject.Inject
 
 class MainPresenter
 @Inject constructor(
-    var repository: SystemRepository
+    private var repository: SystemRepository
 ) : HBMvpLcePresenter<MainActivity>(), MainContract.Presenter {
 
-    private val mData = ArrayList<DataWrapper<User>>()
-    private val mDataTemp = ArrayList<DataWrapper<User>>()
+    private val mData = ArrayList<DataWrapper<News>>()
+    private val mDataTemp = ArrayList<DataWrapper<News>>()
 
-    private val mDataFilter = ArrayList<DataWrapper<User>>()
-    private val mBookmarkSet = TreeSet<Double>()
+    private val mDataFilter = ArrayList<DataWrapper<News>>()
+
+    private val mTabsContent = HashSet<String>()
+
 
     private var mPage = 1
     private var isLoadNext = true
@@ -30,6 +31,7 @@ class MainPresenter
         if (pullToRefresh) {
             mDataTemp.clear()
             mDataTemp.addAll(mData)
+            mTabsContent.clear()
             mData.clear()
             if (isViewAttached()) {
                 getView().setData(mDataTemp)
@@ -44,28 +46,20 @@ class MainPresenter
         }
 
         val dm = dataManager<DataManager>()
-        val bookmarkSet = dm.getAllBookmarks()
+
         disposable.clear()
         disposable.addAll(
-            repository.getUsers(mPage)
+            repository.getNewsfeed(mPage)
                 .doOnNext {
                     if (it.isEmpty()) isLoadNext = false
                 }
                 .flatMap {
                     Observable.fromIterable(it)
                 }
-                .doOnNext {
-                    val user = it.getData()
-                    user.isBookrmarked = false
-                    val key = user.userId.toDouble()
-                    if (bookmarkSet.contains(key)) {
-                        user.isBookrmarked = true
-                        mBookmarkSet.add(key)
-                    }
-                }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
+                    mTabsContent.add(it.getData().contentType)
                     mData.add(it)
                 }, { error ->
                     if (isViewAttached()) {
@@ -74,6 +68,9 @@ class MainPresenter
                 }, {
                     if (isViewAttached()) {
                         getView().apply {
+                            var arr = Array(mTabsContent.size) {""}
+                            arr = mTabsContent.toArray(arr)
+                            updateTablayout(arr)
                             setData(mData)
                             showContent()
                         }
@@ -95,67 +92,56 @@ class MainPresenter
         loadData(pullToRefresh = false)
     }
 
-    override fun pause() {
-        val dm = dataManager<DataManager>()
-        dm.setBookmarks(mBookmarkSet)
-        super.pause()
+
+    override fun setNewsSelected(news: News) {
+        dataManager<DataManager>().setNews(news)
     }
 
-    override fun setUserSelected(user: User) {
-        dataManager<DataManager>().setUser(user)
-    }
-
-    override fun bookmark(data: DataWrapper<User>) {
-        val key = data.getData().userId.toDouble()
-        if (mBookmarkSet.contains(key)) {
-            mBookmarkSet.remove(key)
-            mDataFilter.remove(data)
-        } else {
-            mBookmarkSet.add(key)
-        }
-    }
-
-    override fun loadAll() {
-        disposable.add(
-            Observable.just(mData)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe {
-                    if (isViewAttached()) {
-                        getView().apply {
-                            setData(it)
-                            showContent()
-                        }
-                    }
-                }
-        )
-    }
-
-    override fun loadBookmark() {
+    override fun filter(name: String) {
         mDataFilter.clear()
-        disposable.add(
-            Observable.just(mData)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .flatMap {
-                    Observable.fromIterable(it)
-                }
-                .filter {
-                    it.getData().isBookrmarked
-                }
-                .subscribe({
-                    mDataFilter.add(it)
-                }, {
 
-                }, {
-                    if (isViewAttached()) {
-                        getView().apply {
-                            setData(mDataFilter)
-                            showContent()
-                        }
+        if (isViewAttached()) {
+            getView().showLoading(false)
+        }
+
+        val filterFunc = Observable.create<List<DataWrapper<News>>> {
+            try {
+                if (name == "Tất cả") {
+                    it.onNext(mData)
+                } else {
+                    val nameLowerCase = name.toLowerCase().trim().hashCode()
+                    val hc = nameLowerCase.hashCode()
+                    val data = mData.filter { ndw ->
+                        val news = ndw.getData()
+                        val hashCode = news.contentType.toLowerCase().hashCode()
+                        hc == hashCode
                     }
-                })
-        )
+                    it.onNext(data)
+
+                }
+                it.onComplete()
+            } catch (e: Exception) {
+                it.onError(e)
+            }
+        }.subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .unsubscribeOn(Schedulers.io())
+            .subscribe({
+                mDataFilter.addAll(it)
+                if (isViewAttached()) {
+                    getView().apply {
+                        setData(mDataFilter)
+                        showContent()
+                    }
+                }
+            }, {
+                if (isViewAttached()) {
+                    getView().showError(it, false)
+                }
+            })
+
+        disposable.add(filterFunc)
+
     }
 }
 

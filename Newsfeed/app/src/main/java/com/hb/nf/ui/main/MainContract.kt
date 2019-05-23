@@ -1,22 +1,21 @@
 package com.hb.nf.ui.main
 
-import com.hb.nf.data.entity.dw.DataWrapper
-import com.hb.nf.data.entity.User
+import com.hb.nf.data.entity.News
 
 interface MainContract {
     interface View {
-        fun loadBy(type: Int)
+        fun loadBy(type: String)
+
+        fun updateTablayout(data: Array<String>)
     }
 
     interface Presenter {
         fun loadNextPage()
 
-        fun setUserSelected(user: User)
+        fun setNewsSelected(news: News)
 
-        fun bookmark(data: DataWrapper<User>)
+        fun filter(name: String)
 
-        fun loadAll()
 
-        fun loadBookmark()
     }
 }

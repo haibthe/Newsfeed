@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import com.hb.nf.ui.reputation.ReputationActivity
+import com.hb.nf.ui.detail.DetailActivity
 import com.hb.nf.ui.main.MainActivity
 
 
@@ -30,7 +30,7 @@ object Navigator {
     }
 
     fun startDetail(activity: Activity) {
-        val intent = Intent(activity, ReputationActivity::class.java)
+        val intent = Intent(activity, DetailActivity::class.java)
         activity.startActivity(intent)
     }
 

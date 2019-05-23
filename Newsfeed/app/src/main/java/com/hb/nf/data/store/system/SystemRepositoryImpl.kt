@@ -1,11 +1,9 @@
 package com.hb.nf.data.store.system
 
 
-import com.hb.nf.data.entity.Reputation
-import com.hb.nf.data.entity.User
+import com.hb.nf.data.entity.News
 import com.hb.nf.data.entity.dw.DataWrapper
-import com.hb.nf.data.entity.dw.ReputationDataWrapper
-import com.hb.nf.data.entity.dw.UserDataWrapper
+import com.hb.nf.data.entity.dw.NewsDataWrapper
 import com.hb.nf.data.repository.SystemRepository
 import io.reactivex.Observable
 
@@ -17,32 +15,6 @@ class SystemRepositoryImpl(
     private val storage: SystemStore.LocalStorage,
     private val service: SystemStore.RequestService
 ) : SystemRepository {
-
-    override fun getUsers(page: Int): Observable<List<DataWrapper<User>>> {
-        return service.getUsers(page = page)
-            .map {
-                if (it.data.isNotEmpty()) {
-                    it.data.map { user ->
-                        UserDataWrapper(user)
-                    }
-                } else {
-                    ArrayList()
-                }
-            }
-    }
-
-    override fun getReputation(user: User, page: Int): Observable<List<DataWrapper<Reputation>>> {
-        return service.getReputationByUser(user.userId, page)
-            .map {
-                if (it.data.isNotEmpty()) {
-                    it.data.map { reputation ->
-                        ReputationDataWrapper(reputation)
-                    }
-                } else {
-                    ArrayList()
-                }
-            }
-    }
 
     override fun getDataTest(): Observable<List<DataWrapper<*>>> {
         return Observable.create<List<String>> {
@@ -74,5 +46,21 @@ class SystemRepositoryImpl(
                     }
                 }
             }
+    }
+
+    override fun getNewsfeed(page: Int): Observable<List<DataWrapper<News>>> {
+        return service.getNewsfeed()
+            .map {
+                it.data
+            }
+            .map {
+                it.map { news ->
+                    NewsDataWrapper(news)
+                }
+            }
+    }
+
+    override fun getDetail(): Observable<News> {
+        return service.getDetail()
     }
 }

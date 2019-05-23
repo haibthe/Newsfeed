@@ -1,7 +1,6 @@
 package com.hb.nf.data.repository
 
-import com.hb.nf.data.entity.Reputation
-import com.hb.nf.data.entity.User
+import com.hb.nf.data.entity.News
 import com.hb.nf.data.entity.dw.DataWrapper
 import io.reactivex.Observable
 
@@ -13,7 +12,7 @@ interface SystemRepository {
 
     fun getDataTest(): Observable<List<DataWrapper<*>>>
 
-    fun getUsers(page: Int = 1) : Observable<List<DataWrapper<User>>>
+    fun getNewsfeed(page: Int = 1) : Observable<List<DataWrapper<News>>>
 
-    fun getReputation(user: User, page: Int = 1): Observable<List<DataWrapper<Reputation>>>
+    fun getDetail() : Observable<News>
 }

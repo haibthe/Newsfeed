@@ -42,8 +42,7 @@ public class NetModule {
     private static final long CONNECT_TIME_OUT = 60;
     private static final long READ_TIME_OUT = 60;
 
-    private static final String VERSION = "2.2";
-    private static final String HOST = "https://api.stackexchange.com/" + VERSION + "/";
+    private static final String HOST = "https://www.dropbox.com/s/dl/";
 
     @Provides
     @Singleton
