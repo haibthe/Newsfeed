@@ -5,12 +5,15 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.RecyclerView
 import butterknife.BindView
 import com.google.android.material.tabs.TabLayout
 import com.hb.lib.mvp.impl.lce.sr.HBMvpLceSRActivity
+import com.hb.lib.utils.ui.ScreenUtils
+import com.hb.lib.utils.ui.ThemeUtils
 import com.hb.nf.R
 import com.hb.nf.app.App
 import com.hb.nf.common.AppConstants
@@ -74,8 +77,12 @@ class MainActivity : HBMvpLceSRActivity<List<DataWrapper<News>>, MainPresenter>(
     }
 
     override fun setupRecylcerView(addItemDecoration: Boolean) {
-        super.setupRecylcerView(false)
+        super.setupRecylcerView(true)
         val rv = getRecyclerView()
+        val padding = ThemeUtils.dpToPx(this, 16)
+        val padding2 = padding / 2
+        rv.setPadding(padding, padding2, padding, padding2)
+
         rv.addOnScrollListener(object : EndlessRecyclerViewListener() {
             override fun onLoadMore(page: Int, totalItemsCount: Int) {
 //                if (mLoadType == LOAD_ALL) {
@@ -104,27 +111,44 @@ class MainActivity : HBMvpLceSRActivity<List<DataWrapper<News>>, MainPresenter>(
 
     class MyViewHolder(itemView: View) : BaseViewHolder<DataWrapper<*>>(itemView) {
 
-        @BindView(R.id.tv_display_name)
+        @BindView(R.id.tv_title)
         lateinit var title: TextView
-        @BindView(R.id.tv_reputation)
-        lateinit var reputation: TextView
-        @BindView(R.id.tv_location)
-        lateinit var location: TextView
         @BindView(R.id.tv_date)
         lateinit var dateView: TextView
-
-        @BindView(R.id.image_view_avatar)
-        lateinit var avatar: ImageView
+        @BindView(R.id.vg_container_image)
+        lateinit var container: ViewGroup
 
         override fun bindData(data: DataWrapper<*>) {
             title.text = data.getTitle()
-            reputation.text = data.getSubtitle()
-            location.text = data.getDescription()
-            App.imageHelper.loadAvatar(avatar, data.getIcon())
 
             val news = data.getData() as News
             val date = AppConstants.parseDate.parse(news.publishedDate)
             dateView.text = AppConstants.formatDate.format(date)
+
+            container.removeAllViews()
+            if (news.images != null) {
+                val size = news.images.size
+                val context = itemView.context
+                val wScreen = ScreenUtils.getScreenWidth(context) - ThemeUtils.dpToPx(context, 16)
+                val pairSize = if (size > 3) {
+                    val wImage = ThemeUtils.dpToPx(context, 200)
+                    val hImage = wImage * 3 / 4
+                    Pair(wImage, hImage)
+                } else {
+                    val wImage = wScreen / size
+                    val hImage = wImage * 3 / 4
+                    Pair(wImage, hImage)
+                }
+
+                news.images.forEach {
+                    val iv = ImageView(context)
+                    val lps = LinearLayout.LayoutParams(pairSize.first, pairSize.second)
+                    container.addView(iv, lps)
+                    iv.adjustViewBounds = true
+
+                    App.imageHelper.loadImageFromUrl(iv, it.href)
+                }
+            }
 
         }
     }

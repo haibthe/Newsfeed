@@ -140,6 +140,7 @@ class MainPresenter
                 }
             })
 
+        disposable.clear()
         disposable.add(filterFunc)
 
     }

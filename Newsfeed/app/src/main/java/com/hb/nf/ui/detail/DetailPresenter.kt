@@ -42,6 +42,7 @@ class DetailPresenter
                 }
             })
 
+        disposable.clear()
         disposable.add(funcDetails)
     }
 }
